@@ -35,7 +35,7 @@ class Metric(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'date': self.date,
+            'date': str(self.date),
             'channel': self.channel,
             'country': self.country,
             'os': self.os,
@@ -50,11 +50,24 @@ class Metric(db.Model):
 @app.route('/metrics', methods=['POST'])
 def metrics_get():
     req_json = request.json
-    filter = req_json.get('filter')
-    if filter:
-        pass
-    metrics = []
-    return json.dumps(metrics)
+    filter_dict = req_json.get('filter')
+    q = db.session.query(Metric)
+    if filter_dict:
+        if filter_dict.get('date_from'):
+            q = q.filter(Metric.date >= filter_dict['date_from'])
+        if filter_dict.get('date_to'):
+            q = q.filter(Metric.date <= filter_dict['date_to'])
+        if filter_dict.get('channels'):
+            q = q.filter(Metric.channel.in_(filter_dict['channels']))
+        if filter_dict.get('countries'):
+            q = q.filter(Metric.country.in_(filter_dict['countries']))
+        if filter_dict.get('os'):
+            q = q.filter(Metric.os.in_(filter_dict['os']))
+
+    # metrics = q.all()
+    # metrics_dicts = [m.to_dict() for m in metrics]
+    # return json.dumps(metrics_dicts)
+    return f'Rows selected: {str(q.count())}\nTotal rows: {str(db.session.query(Metric).count())}'
 
 
 if __name__ == '__main__':
