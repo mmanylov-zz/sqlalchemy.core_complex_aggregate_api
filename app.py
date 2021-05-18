@@ -1,12 +1,11 @@
 import os
 
-from datetime import datetime
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask import request
-import json
+from sqlalchemy import func
 
 
 app = Flask(__name__)
@@ -46,12 +45,32 @@ class Metric(db.Model):
             'revenue': self.revenue,
         }
 
+    @staticmethod
+    def get_attributes():
+        return ('id', 'date', 'channel', 'country', 'os', 'impressions', 'clicks', 'installs', 'spend', 'revenue')
+
+
+METRIC_ATTR_MAPPING = {
+    'date': Metric.date,
+    'channel': Metric.channel,
+    'country': Metric.country,
+    'os': Metric.os,
+}
+
 
 @app.route('/metrics', methods=['POST'])
 def metrics_get():
     req_json = request.json
     filter_dict = req_json.get('filter')
-    q = db.session.query(Metric)
+    group_by_list = req_json.get('group_by')
+    if group_by_list:
+        attr_list = [v for k, v in METRIC_ATTR_MAPPING.items() if k in group_by_list]
+        q = db.session.query(func.count(Metric.id), func.sum(Metric.impressions), func.sum(Metric.clicks),
+                             func.sum(Metric.installs), func.sum(Metric.spend), func.sum(Metric.revenue))\
+            .group_by(*attr_list)
+    else:
+        q = db.session.query(Metric)
+
     if filter_dict:
         if filter_dict.get('date_from'):
             q = q.filter(Metric.date >= filter_dict['date_from'])
@@ -63,6 +82,7 @@ def metrics_get():
             q = q.filter(Metric.country.in_(filter_dict['countries']))
         if filter_dict.get('os'):
             q = q.filter(Metric.os.in_(filter_dict['os']))
+
 
     # metrics = q.all()
     # metrics_dicts = [m.to_dict() for m in metrics]
