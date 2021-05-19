@@ -8,6 +8,8 @@ from flask import request
 from sqlalchemy import func
 import json
 
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.sql import label
 
 app = Flask(__name__)
 env_config = os.getenv("APP_SETTINGS", "config.DevelopmentConfig")
@@ -29,6 +31,10 @@ class Metric(db.Model):
     spend = db.Column(db.Float, nullable=False)
     revenue = db.Column(db.Float, nullable=False)
 
+    @hybrid_property
+    def cpi(self):
+        return self.spend / self.installs
+
     def __repr__(self):
         return '<Metric id={} date={}>'.format(self.id, str(self.date))
 
@@ -44,6 +50,7 @@ class Metric(db.Model):
             'installs': self.installs,
             'spend': self.spend,
             'revenue': self.revenue,
+            'cpi': self.cpi
         }
 
     @staticmethod
@@ -61,6 +68,7 @@ METRIC_ATTR_MAPPING = {
     'installs': Metric.installs,
     'spend': Metric.spend,
     'revenue': Metric.revenue,
+    'cpi': Metric.cpi
 }
 
 
@@ -72,7 +80,7 @@ def metrics_get():
     if group_by_list:
         attr_dict_to_group_by = {k:v for k, v in METRIC_ATTR_MAPPING.items() if k in group_by_list}
         header_row = ['count(metric.id)', 'sum(metric.impressions)', 'sum(metric.clicks)', 'sum(metric.installs)',
-                      'sum(metric.spend)', 'sum(metric.revenue)']
+                      'sum(metric.spend)', 'sum(metric.revenue)', 'cpi']
         header_row.extend(attr_dict_to_group_by.keys())
         metric_id_count = func.count(Metric.id)
         metric_impressions_sum = func.sum(Metric.impressions)
@@ -80,6 +88,7 @@ def metrics_get():
         metric_installs_sum = func.sum(Metric.installs)
         metric_spend_sum = func.sum(Metric.spend)
         metric_revenue_sum = func.sum(Metric.revenue)
+        cpi_aggregate = label('cpi', func.sum(Metric.spend) / func.sum(Metric.installs))
         group_by_order_mapping = {
             'id': metric_id_count,
             'impressions': metric_impressions_sum,
@@ -90,13 +99,13 @@ def metrics_get():
             'date': Metric.date,
             'channel': Metric.channel,
             'country': Metric.country,
-            'os': Metric.os
+            'os': Metric.os,
+            'cpi': cpi_aggregate
         }
         aggregates_list = [metric_id_count, metric_impressions_sum, metric_clicks_sum, metric_installs_sum,
-                           metric_spend_sum, metric_revenue_sum]
+                           metric_spend_sum, metric_revenue_sum, cpi_aggregate]
         aggregates_list.extend(attr_dict_to_group_by.values())
-        q = db.session.query(*aggregates_list)\
-            .group_by(*attr_dict_to_group_by.values())
+        q = db.session.query(*aggregates_list).group_by(*attr_dict_to_group_by.values())
     else:
         q = db.session.query(Metric)
 
