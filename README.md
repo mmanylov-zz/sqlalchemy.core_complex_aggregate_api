@@ -1,3 +1,18 @@
+# Deployment
+
+1. Create venv and install dependencies from ```requirements.txt```
+2. Create the database and the user
+3. Migrate the database with the following commands
+```
+flask db init
+flask db upgrade
+```
+4. Import the dataset with ```python import_dataset.py```
+5. Run the app with ```python app.py```
+
+
+# Test requests
+
 1. Show the number of impressions and clicks that occurred before the 1st of June 2017, broken down by channel and country, sorted by clicks in descending order.
 ```
 curl --location --request POST 'http://127.0.0.1:5000/metrics' \
