@@ -75,8 +75,8 @@ def metrics_get():
     group_by_list = req_json.get('group_by')
     if group_by_list:
         attr_dict_to_group_by = {k:v for k, v in METRIC_ATTR_MAPPING.items() if k in group_by_list}
-        header_row = ['count(metric.id)', 'sum(metric.impressions)', 'sum(metric.clicks)', 'sum(metric.installs)',
-                      'sum(metric.spend)', 'sum(metric.revenue)', 'cpi']
+        header_row = ['count(metric.id)', 'impressions', 'clicks', 'installs',
+                      'spend', 'revenue', 'cpi']
         header_row.extend(attr_dict_to_group_by.keys())
         metric_id_count = func.count(Metric.id)
         metric_impressions_sum = func.sum(Metric.impressions)
