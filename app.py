@@ -123,24 +123,17 @@ def metrics_get():
 
     sort_dict = req_json.get('sort')
     if sort_dict:
-        if group_by_list:
-            sort_list = []
-            for attr, order in sort_dict.items():
-                if order == 'ASC':
-                    sort_list.append(group_by_order_mapping[attr].asc())
-                else:
-                    sort_list.append(group_by_order_mapping[attr].desc())
-            if sort_list:
-                q = q.order_by(*sort_list)
-        else:
-            sort_list = []
-            for attr, order in sort_dict.items():
-                if order == 'ASC':
-                    sort_list.append(METRIC_ATTR_MAPPING[attr].asc())
-                else:
-                    sort_list.append(METRIC_ATTR_MAPPING[attr].desc())
-            if sort_list:
-                q = q.order_by(*sort_list)
+        sort_list = []
+        order_mapping_dict = group_by_order_mapping if group_by_list else METRIC_ATTR_MAPPING
+
+        for attr, order in sort_dict.items():
+            if order == 'ASC':
+                sort_list.append(order_mapping_dict[attr].asc())
+            else:
+                sort_list.append(order_mapping_dict[attr].desc())
+
+        if sort_list:
+            q = q.order_by(*sort_list)
 
     metrics = q.all()
 
