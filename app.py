@@ -53,10 +53,6 @@ class Metric(db.Model):
             'cpi': self.cpi
         }
 
-    @staticmethod
-    def get_attributes():
-        return ('id', 'date', 'channel', 'country', 'os', 'impressions', 'clicks', 'installs', 'spend', 'revenue')
-
 
 METRIC_ATTR_MAPPING = {
     'date': Metric.date,
