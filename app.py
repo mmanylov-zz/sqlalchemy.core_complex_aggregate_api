@@ -1,5 +1,5 @@
 import os
-
+from copy import deepcopy
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -147,6 +147,11 @@ def metrics_get():
     if group_by_list:
         result_list_of_dicts = []
         for m in metrics:
+            if 'date' in header_row:
+                idx = header_row.index('date')
+                data_list = list(deepcopy(m._data))
+                data_list[idx] = str(m._data[idx])
+                m = data_list
             result_list_of_dicts.append(dict(zip(header_row, m)))
         return json.dumps(result_list_of_dicts)
     else:
