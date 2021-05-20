@@ -2,11 +2,7 @@
 
 1. Create venv and install dependencies from ```requirements.txt```
 2. Create the database and the user
-3. Migrate the database with the following commands
-```
-flask db init
-flask db upgrade
-```
+3. Migrate the database with the command ```flask db upgrade```
 4. Import the dataset with ```python import_dataset.py```
 5. Run the app with ```python app.py```
 
